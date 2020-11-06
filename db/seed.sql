@@ -1,23 +1,7 @@
 ## SEED
-CREATE DATABASE employee_manager;
-USE employee_manager;
 
-CREATE TABLE employee (
-    id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    first_name VARCHAR(30),
-    last_name VARCHAR(30),
-    role_id INTEGER,
-    manager_id INTEGER
-)
+INSERT INTO `role` (title, salary, department_id) VALUES ('Line Cook', 25000, 1), ('Cashier', 30000, 1), ('Manager', 50000, 1) 
 
-CREATE TABLE `role` (
-    id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    tile VARCHAR(30),
-    salary DECIMAL,
-    department_id INTEGER
-)
+INSERT INTO departement (`name`) VALUES ('Cooking'), ('Front Office'), ('Management')
 
-CREATE TABLE departement (
-    id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(30)
-)
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('Squidward', 'Tentacles', 2, 1)
