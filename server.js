@@ -1,9 +1,6 @@
 const inquirer = require('inquirer')
 const figlet = require('figlet')
 const orm = require('./config/orm')
-const Employee = require('./public/Employee')
-const Role = require('./public/Role')
-const Department = require('./public/Department')
 
 
 async function viewEmployees() {
@@ -25,7 +22,7 @@ async function viewDepartments(){
 }
 
 async function addEmployee(){
-    let roles = await orm.getAllRoles()
+    let roles = await orm.getRoleTitles()
     let managers = await orm.getManager()
     managers.unshift({id: null, Manager: "None"})
 
@@ -51,6 +48,11 @@ async function addEmployee(){
             choices: managers.map(object => object.Manager)
         }
     ])
+    let roleDetails = roles.find(object => object.title === employee.role)
+    let manager = managers.find(object => object.Manager === employee.manager)
+    employee.role = roleDetails
+    employee.manager = manager
+
     orm.addEmployee(employee)
     console.log(employee)
     main()
@@ -96,7 +98,7 @@ async function updateRole(){
         type:"list",
         name: "allRoles",
         message: "Select which role you would like to update",
-        choices: orm.getAllRoles()
+        choices: orm.getRoleTitles()
     },
     {
         type:"list",
@@ -120,14 +122,78 @@ async function updateRole(){
             orm.updateRole(choice.allRoles, choice.roleTable, choice.roleInfo)
             break;
     }
+    main()
 }
 
+async function deleteAll(){
+    let deletePrompt = await inquirer.prompt([{
+            type: "list",
+            name:"deletechoice",
+            message: "What would you like to delete?",
+            choices: ["Employee", "Role", "Department"]
+    }])
+    switch(deletePrompt.deletechoice){
+        case "Employee":
+            deleteEmployee()
+            break;
+        case "Role":
+            deleteRole()
+            break;
+        case "Department":
+            deleteDept()
+            break;
+    }
+}
+
+async function deleteEmployee(){
+    console.log("[deleteEmployee] function reached ...")
+    let deletePrompt = await inquirer.prompt([
+        {
+            type: "list",
+            name: "deleteChoice",
+            message: "Select the employee you would like to delete",
+            choices: orm.getEmployeeNames()
+        }
+    ])
+    console.log(`returning ${deletePrompt.deleteChoice}...`)
+
+    await orm.deleteEmployee(deletePrompt.deleteChoice)
+}
+
+async function deleteRole(){
+    let deletePrompt = await inquirer.prompt([{
+        type: "list",
+        name: "deleteChoice",
+        message: "Select the role you would like to delete",
+        choices: orm.getRoleTitles()
+    }])
+    await orm.deleteRole(deletePrompt.deleteChoice)
+}
+
+async function deleteDept(){
+    let deletePrompt = await inquirer.prompt([{
+        type: "list",
+        name: "deleteChoice",
+        message: "Select the Department you would like to delete",
+        choices: orm.getAllDepartments()
+    }])
+    await orm.deleteDepartment(deletePrompt.deleteChoice)
+}
 
 async function main(){
     let promptAnswers = await inquirer.prompt([{
             type: "list",
             message:"What would you like to do?",
-            choices: ["Add Employee", "Add Role", "Add Department", "View Employees", "View Roles", "View Departments", "Update Role"],
+            choices: [
+                "Add Employee", 
+                "Add Role", 
+                "Add Department", 
+                "View Employees", 
+                "View Roles", 
+                "View Departments", 
+                "Update Role", 
+                "Delete Employees, Roles, and Departments"
+            ],
             name: "choiceList"
     }])
     
@@ -153,10 +219,13 @@ async function main(){
         case "Update Role":
             updateRole()
             break;
+        case "Delete Employees, Roles, and Departments":
+            deleteAll()
+            break;
     }
 
 
-    await orm.closeORM()
+    //await orm.closeORM()
 }
 
 
