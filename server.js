@@ -54,18 +54,19 @@ async function addEmployee(){
     employee.manager = manager
 
     orm.addEmployee(employee)
-    console.log(employee)
+    console.log(`Adding ${employee.firstName} ${employee.lastName} to the database`)
     main()
 }
 
 async function addRole(){
-    let departments = orm.getAllDepartments()
+    let departments = await orm.getAllDepartments()
     let role = await inquirer.prompt([
         {
             message: "What is the title of this role?",
             name: "title"
         },
         {
+            type: "number",
             message: "What is the salary for this role?",
             name: "salary"
         },
@@ -73,11 +74,11 @@ async function addRole(){
             type: "list",
             name: "department",
             message: "Select the department for this role",
-            choices: departments.map(object => object.title)
+            choices: departments
         }
     ])
     orm.addRole(role)
-    console.log(role)
+    console.log(`Adding ${role.title} to the database`)
     main()
 }
 
@@ -89,16 +90,17 @@ async function addDepartment(){
         }
     ])
     orm.addDepartment(department)
-    console.log(department)
+    console.log(`Adding ${department.name} to the database`)
     main()
 }
 
 async function updateRole(){
+    let roles = await orm.getAllRoles()
     let choice = await inquirer.prompt([{
         type:"list",
         name: "allRoles",
         message: "Select which role you would like to update",
-        choices: orm.getRoleTitles()
+        choices: roles.map(object => object.title)
     },
     {
         type:"list",
@@ -111,17 +113,22 @@ async function updateRole(){
         message: "Enter the updated info"
     }])
 
-    switch(choice.roleInfo){
+    let roleDetails = roles.find(object => object.title === choice.allRoles)
+    // console.log(roleDetails.id)
+
+    switch(choice.roleTable){
         case "Title":
-            orm.updateRole(choice.allRoles, choice.roleTable, choice.roleInfo)
+            // console.log('updating title ...')
+            orm.updateRole(choice.roleTable, choice.roleInfo, roleDetails.id)
             break;
         case "Salary":
-            orm.updateRole(choice.allRoles, choice.roleTable, choice.roleInfo)
+            orm.updateRole(choice.roleTable, choice.roleInfo, roleDetails.id)
             break;
         case "Department":
-            orm.updateRole(choice.allRoles, choice.roleTable, choice.roleInfo)
+            orm.updateRole(choice.roleTable, choice.roleInfo, roleDetails.id)
             break;
     }
+    console.log(`Updating ${choice.allRoles} to ${choice.roleInfo} for ${choice.roleTable}`)
     main()
 }
 
@@ -147,37 +154,45 @@ async function deleteAll(){
 
 async function deleteEmployee(){
     console.log("[deleteEmployee] function reached ...")
-    let deletePrompt = await inquirer.prompt([
-        {
+    let employees = await orm.getEmployeeNames()
+    //employees.push({id: null, name: 'Cancel'})
+    let deletePrompt = await inquirer.prompt([{
             type: "list",
             name: "deleteChoice",
             message: "Select the employee you would like to delete",
-            choices: orm.getEmployeeNames()
-        }
-    ])
-    console.log(`returning ${deletePrompt.deleteChoice}...`)
+            choices: employees.map(object => object.name)
+        }])
+    let selectedEmployee = employees.find(object => object.name === deletePrompt.deleteChoice)
+    console.log(`Removing id=${selectedEmployee.id}, ${deletePrompt.deleteChoice} from the database`)
 
-    await orm.deleteEmployee(deletePrompt.deleteChoice)
+    await orm.deleteEmployee(selectedEmployee.id)
+    main()
 }
 
 async function deleteRole(){
+    let roles = await orm.getRoleTitles()
     let deletePrompt = await inquirer.prompt([{
         type: "list",
         name: "deleteChoice",
         message: "Select the role you would like to delete",
-        choices: orm.getRoleTitles()
+        choices: roles.map(object => object.title)
     }])
+    console.log(`Removing ${deletePrompt.deleteChoice} from the database`)
     await orm.deleteRole(deletePrompt.deleteChoice)
+    main()
 }
 
 async function deleteDept(){
+    let departments = await orm.getAllDepartments()
     let deletePrompt = await inquirer.prompt([{
         type: "list",
         name: "deleteChoice",
         message: "Select the Department you would like to delete",
-        choices: orm.getAllDepartments()
+        choices: departments.map(object => object.name)
     }])
+    console.log(`Removing ${deletePrompt.deleteChoice} from the database`)
     await orm.deleteDepartment(deletePrompt.deleteChoice)
+    main()
 }
 
 async function main(){
